@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "193225527976",
+    "firebase_url": "https://psu-repository.firebaseio.com",
+    "project_id": "psu-repository",
+    "storage_bucket": "psu-repository.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:193225527976:android:2aa3a540a6e67063",
+        "android_client_info": {
+          "package_name": "psurepository.edu.ph.psurepository"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "193225527976-u810g38ancmv9m7pqrdgl3tojigg2phg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJopRM7WFXXd58mlStxaVSICCJhKJA-NE"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

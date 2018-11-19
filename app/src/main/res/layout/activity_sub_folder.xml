@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SubFolderActivity">
+
+    <TextView
+        android:id="@+id/breadcrumbs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Home>>"
+        android:gravity="center"
+        android:textAppearance="@style/Base.TextAppearance.AppCompat.Display1" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_folder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignStart="@+id/fab_camera"
+        android:layout_gravity="bottom|end"
+        android:layout_marginBottom="167dp"
+        android:elevation="6dp"
+        android:src="@drawable/ic_action_folder"
+        android:visibility="invisible"
+        app:backgroundTint="@color/fab1_color"
+        app:pressedTranslationZ="12dp" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_camera"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignStart="@+id/fab_plus"
+        android:layout_gravity="bottom|end"
+        android:layout_marginBottom="94dp"
+        android:elevation="6dp"
+        android:src="@drawable/ic_action_camera"
+        android:visibility="invisible"
+        app:backgroundTint="@color/fab2_color"
+        app:pressedTranslationZ="12dp" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_plus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_gravity="bottom|end"
+        android:layout_marginBottom="21dp"
+        android:layout_marginEnd="19dp"
+
+        android:elevation="6dp"
+        android:src="@drawable/ic_action_plus"
+        app:pressedTranslationZ="12dp" />
+
+    <ListView
+        android:id="@+id/listViewSubFolder"
+        android:layout_width="match_parent"
+        android:layout_height="465dp"
+        android:layout_below="@+id/breadcrumbs" />
+
+</RelativeLayout>

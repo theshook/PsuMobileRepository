@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="Create New Folder"
+        android:textSize="30sp"
+        android:layout_marginBottom="10sp"
+        />
+
+    <EditText
+        android:id="@+id/folderName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:hint="Folder Name"
+        android:inputType="textPersonName"
+        android:layout_marginBottom="10sp"
+        />
+
+    <Button
+        android:id="@+id/createFolder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorAccent"
+        android:text="Create Folder"
+        android:textColor="#FFF"
+        android:textSize="20sp" />
+
+</LinearLayout>
