@@ -2,12 +2,8 @@ package psurepository.edu.ph.psurepository;
 
 import android.Manifest;
 import android.app.ProgressDialog;
-import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -20,14 +16,13 @@ import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.format.Time;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,9 +35,12 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.IOException;
@@ -334,8 +332,6 @@ public class SubFolderActivity extends AppCompatActivity {
         mProgress.show();
         mProgress.setMessage("Uploading . . .");
 
-        Log.d("FILE URI", "onActivityResult: " + imageUri.getPath());
-
         //Firebase storage folder where you want to put the images
         StorageReference storageRef = FirebaseStorage.getInstance().getReference();
 
@@ -397,7 +393,9 @@ public class SubFolderActivity extends AppCompatActivity {
     private void RequestMultiplePermission() {
     // Creating String Array with Permissions.
     ActivityCompat.requestPermissions(SubFolderActivity.this, new String[]
-            {Manifest.permission.CAMERA
+            {Manifest.permission.CAMERA,
+              Manifest.permission.WRITE_EXTERNAL_STORAGE,
+              Manifest.permission.READ_EXTERNAL_STORAGE
             }, RequestPermissionCode);
   }
     // Calling override method.
@@ -407,7 +405,9 @@ public class SubFolderActivity extends AppCompatActivity {
       case RequestPermissionCode:
         if (grantResults.length > 0) {
           boolean CameraPermission = grantResults[0] == PackageManager.PERMISSION_GRANTED;
-          if (CameraPermission) {
+          boolean ReadStorage = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+          boolean WriteStorage = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+          if (CameraPermission && ReadStorage && WriteStorage) {
             Toast.makeText(SubFolderActivity.this, "Permission Granted", Toast.LENGTH_LONG).show();
           }
           else {
@@ -419,39 +419,59 @@ public class SubFolderActivity extends AppCompatActivity {
   }
     // Checking permission is enabled or not using function starts from here.
     public boolean CheckingPermissionIsEnabledOrNot() {
-    int FirstPermissionResult = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA);
-    return FirstPermissionResult == PackageManager.PERMISSION_GRANTED;
+      int FirstPermissionResult = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA);
+      int SecondPermissionResult = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE);
+      int ThirdPermissionResult = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
+      return FirstPermissionResult == PackageManager.PERMISSION_GRANTED &&
+              SecondPermissionResult == PackageManager.PERMISSION_GRANTED &&
+              ThirdPermissionResult == PackageManager.PERMISSION_GRANTED;
   }
 
   // ************************** FUNCTIONS **********************************************
 
   //File on long Press
-  private void file_onLongPress(SubFolder subFolder) {
+  private void file_onLongPress(final SubFolder subFolder) {
     AlertDialog.Builder mBuilder = new AlertDialog.Builder(SubFolderActivity.this);
     View mView = getLayoutInflater().inflate(R.layout.dialog_information, null);
     TextView txtDate, txtUploaded;
-    Button btnMove, btnEdit, btnDelete;
+    ImageView dialog_image;
+    Button btnMove, btnDownload, btnDelete;
 
     txtDate = (TextView) mView.findViewById(R.id.txtDate);
     txtUploaded = (TextView) mView.findViewById(R.id.txtUploaded);
+    dialog_image = (ImageView) mView.findViewById(R.id.dialogImage);
     btnMove = (Button) mView.findViewById(R.id.btnMove);
-    btnEdit = (Button) mView.findViewById(R.id.btnEdit);
+    btnDownload = (Button) mView.findViewById(R.id.btnDownload);
     btnDelete = (Button) mView.findViewById(R.id.btnDelete);
 
     if (subFolder.getTimestamp() != null) {
       long timestamp = Long.parseLong(subFolder.getTimestamp()) * 1000L;
       txtDate.setText("Date uploaded: " + getDate(timestamp));
     }
+    Picasso.get()
+            .load(subFolder.getImage_upload())
+            .into(dialog_image);
 
     // Show Dialog
     mBuilder.setView(mView);
     final AlertDialog dialogAreaFolder;
     dialogAreaFolder = mBuilder.create();
     dialogAreaFolder.show();
+
+    btnDownload.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        mStorage.child(subFolder.getImage_upload());
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        // Create a storage reference from our app
+        StorageReference storageRef = storage.getReferenceFromUrl(subFolder.getImage_upload());
+        downloadToLocalFile(storageRef);
+      }
+    });
   }
 
   // Folder on long Press
-  private void folder_onLongPress(SubFolder subFolder) {
+  private void folder_onLongPress(final SubFolder subFolder) {
     AlertDialog.Builder mBuilder = new AlertDialog.Builder(SubFolderActivity.this);
     View mView = getLayoutInflater().inflate(R.layout.dialog_folder_information, null);
     TextView txtDate, txtUploaded;
@@ -460,19 +480,87 @@ public class SubFolderActivity extends AppCompatActivity {
     txtDate = (TextView) mView.findViewById(R.id.txtDate);
     txtUploaded = (TextView) mView.findViewById(R.id.txtUploaded);
     btnMove = (Button) mView.findViewById(R.id.btnMove);
-    btnEdit = (Button) mView.findViewById(R.id.btnEdit);
+    btnEdit = (Button) mView.findViewById(R.id.btnDownload);
     btnDelete = (Button) mView.findViewById(R.id.btnDelete);
-
-    if (subFolder.getTimestamp() != null) {
-      long timestamp = Long.parseLong(subFolder.getTimestamp()) * 1000L;
-      txtDate.setText("Date uploaded: " + getDate(timestamp));
-    }
 
     // Show Dialog
     mBuilder.setView(mView);
     final AlertDialog dialogAreaFolder;
     dialogAreaFolder = mBuilder.create();
     dialogAreaFolder.show();
+
+    if (subFolder.getTimestamp() != null) {
+      long timestamp = Long.parseLong(subFolder.getTimestamp()) * 1000L;
+      txtDate.setText("Date Created: " + getDate(timestamp));
+    }
+
+    btnDelete.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        folderDelete(subFolder.getSub_folder_id());
+        dialogAreaFolder.dismiss();
+      }
+    });
+
+
+  }
+
+  private void folderDelete(String FOLDER_ID) {
+      DatabaseReference drSubFolders = FirebaseDatabase
+              .getInstance().getReference("subfolders").child(folder_id).child(FOLDER_ID);
+
+      drSubFolders.removeValue();
+
+      Toast.makeText(this, "Folder successfully deleted."
+              , Toast.LENGTH_LONG).show();
+  }
+
+
+  //Download file
+  private void downloadToLocalFile(StorageReference fileRef) {
+    if (fileRef != null) {
+      mProgress.setTitle("Downloading...");
+      mProgress.setMessage(null);
+      mProgress.show();
+
+      try {
+        final File localFile = File.createTempFile("images", "jpg");
+
+        String myfolder=Environment.getExternalStoragePublicDirectory
+                (Environment.DIRECTORY_PICTURES).getPath()+"/PSUREPOSITORY/";
+        File f = new File(myfolder);
+        File fileNameOnDevice = null;
+        if(!f.exists())
+          f.mkdir();
+        else
+          fileNameOnDevice = new File(myfolder +
+                  folder_name + new Date().getTime()+".jpg");
+
+        fileRef.getFile(fileNameOnDevice).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+          @Override
+          public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+            mProgress.dismiss();
+          }
+        }).addOnFailureListener(new OnFailureListener() {
+          @Override
+          public void onFailure(@NonNull Exception exception) {
+            mProgress.dismiss();
+            Toast.makeText(SubFolderActivity.this, exception.getMessage(), Toast.LENGTH_LONG).show();
+          }
+        }).addOnProgressListener(new OnProgressListener<FileDownloadTask.TaskSnapshot>() {
+          @Override
+          public void onProgress(FileDownloadTask.TaskSnapshot taskSnapshot) {
+            // progress percentage
+            double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
+
+            // percentage in progress dialog
+            mProgress.setMessage("Downloaded " + ((int) progress) + "%...");
+          }
+        });
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
   }
 
   // Convert Date
