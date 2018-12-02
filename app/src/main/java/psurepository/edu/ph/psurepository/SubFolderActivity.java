@@ -16,6 +16,7 @@ import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -53,12 +54,19 @@ import java.util.TimeZone;
 public class SubFolderActivity extends AppCompatActivity {
   public static final String FOLDER_NAME="FOLDER_NAME";
   public static final String FOLDER_ID="FOLDER_ID";
+  public static final String FIRST_NAME="FIRST_NAME";
+  public static final String LAST_NAME="LAST_NAME";
+  public static final String ACCESS_AREA="ACCESS_AREA";
+
+  private String USER_FIRSTNAME, USER_LASTNAME;
 
     // Widgets
     TextView breadcrumbs;
     FloatingActionButton fab_plus, fab_camera, fab_folder;
     Animation FabOpen, FabClose, FabClockwise, FabCounterClockwise;
     ListView listViewSubFolders;
+    EditText edtSearch;
+    Button btnSearch;
 
     // Used for animation
     boolean isOpen = false;
@@ -110,6 +118,8 @@ public class SubFolderActivity extends AppCompatActivity {
         fab_plus = (FloatingActionButton) findViewById(R.id.fab_plus);
         fab_camera = (FloatingActionButton) findViewById(R.id.fab_camera);
         fab_folder = (FloatingActionButton) findViewById(R.id.fab_folder);
+        edtSearch = findViewById(R.id.edtSearch);
+        btnSearch = findViewById(R.id.btnSearch);
 
         // FLOATING ACTION BUTTON ANIMATIONS
         FabOpen = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_open);
@@ -121,7 +131,9 @@ public class SubFolderActivity extends AppCompatActivity {
         Intent intent = getIntent();
         folder_id = intent.getStringExtra(FOLDER_ID);
         folder_name = intent.getStringExtra(FOLDER_NAME);
-
+        USER_FIRSTNAME = intent.getStringExtra(FIRST_NAME);
+        USER_LASTNAME = intent.getStringExtra(LAST_NAME);
+      Log.d("FULL NAME", "onCreate: " + USER_FIRSTNAME + USER_LASTNAME);
         // Firebase
         databaseSubFolder = FirebaseDatabase.getInstance().getReference("subfolders").child(folder_id);
         databaseUpload = FirebaseDatabase.getInstance().getReference("uploads").child(folder_id);
@@ -142,7 +154,8 @@ public class SubFolderActivity extends AppCompatActivity {
         fab_folderOnClick();
         listViewFolders_OnClick();
         fab_cameraOnClick();
-      listViewFolders_OnLongClick();
+        listViewFolders_OnLongClick();
+        btnSearch_onClick();
 
       // Permissions
         isPermissionEnabled();
@@ -152,42 +165,42 @@ public class SubFolderActivity extends AppCompatActivity {
     protected void onStart() {
     super.onStart();
 
-    final Query foldersQuery = FirebaseDatabase.getInstance().getReference("subfolders").child(folder_id).orderByChild("sub_folder_name");
-    foldersQuery.addValueEventListener(new ValueEventListener() {
-      @Override
-      public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-        subFolderList.clear();
-        for(DataSnapshot subfolderSnapshot : dataSnapshot.getChildren()) {
-          SubFolder subFolder = subfolderSnapshot.getValue(SubFolder.class);
-          subFolderList.add(subFolder);
-        }
-        SubFolderList areaFoldersListAdapter = new SubFolderList(SubFolderActivity.this, subFolderList);
-        listViewSubFolders.setAdapter(areaFoldersListAdapter);
+      final Query foldersQuery = FirebaseDatabase.getInstance().getReference("subfolders").child(folder_id).orderByChild("sub_folder_name");
+      foldersQuery.addValueEventListener(new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+          subFolderList.clear();
+          for(DataSnapshot subfolderSnapshot : dataSnapshot.getChildren()) {
+            SubFolder subFolder = subfolderSnapshot.getValue(SubFolder.class);
+            subFolderList.add(subFolder);
+          }
+          SubFolderList areaFoldersListAdapter = new SubFolderList(SubFolderActivity.this, subFolderList);
+          listViewSubFolders.setAdapter(areaFoldersListAdapter);
 
-        Query dbUploads = databaseUpload.orderByKey();
-        dbUploads.addListenerForSingleValueEvent(new ValueEventListener() {
-          @Override
-          public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-            for(DataSnapshot subfolderSnapshot : dataSnapshot.getChildren()) {
-              SubFolder subFolder = subfolderSnapshot.getValue(SubFolder.class);
-              subFolderList.add(subFolder);
+          Query dbUploads = databaseUpload.orderByKey();
+          dbUploads.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+              for(DataSnapshot subfolderSnapshot : dataSnapshot.getChildren()) {
+                SubFolder subFolder = subfolderSnapshot.getValue(SubFolder.class);
+                subFolderList.add(subFolder);
+              }
+              SubFolderList uploadImageListAdapter = new SubFolderList(SubFolderActivity.this, subFolderList);
+              listViewSubFolders.setAdapter(uploadImageListAdapter);
             }
-            SubFolderList uploadImageListAdapter = new SubFolderList(SubFolderActivity.this, subFolderList);
-            listViewSubFolders.setAdapter(uploadImageListAdapter);
-          }
 
-          @Override
-          public void onCancelled(@NonNull DatabaseError databaseError) {
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
 
-          }
-        });
-      }
+            }
+          });
+        }
 
-      @Override
-      public void onCancelled(@NonNull DatabaseError databaseError) {
+        @Override
+        public void onCancelled(@NonNull DatabaseError databaseError) {
 
-      }
-    });
+        }
+      });
   }
 
     private void listViewFolders_OnClick() {
@@ -223,7 +236,6 @@ public class SubFolderActivity extends AppCompatActivity {
         }
       });
     }
-
     private void fab_plusOnClick() {
         fab_plus.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -280,9 +292,9 @@ public class SubFolderActivity extends AppCompatActivity {
 
                           Long tsLong = System.currentTimeMillis()/1000;
                           String ts = tsLong.toString();
-
+                          String createdBy = USER_LASTNAME + ", " + USER_FIRSTNAME;
                             // Creating Object
-                            SubFolder SubFolderClass = new SubFolder(folderId, txtfolderName, null, ts);
+                            SubFolder SubFolderClass = new SubFolder(folderId, txtfolderName, null, ts, createdBy, null);
 
                             // Saving Object
                             databaseSubFolder.child(folderId).setValue(SubFolderClass);
@@ -324,6 +336,19 @@ public class SubFolderActivity extends AppCompatActivity {
       }
     });
   }
+    private void btnSearch_onClick() {
+        btnSearch.setOnClickListener(new View.OnClickListener() {
+          @Override
+          public void onClick(View v) {
+            String search = edtSearch.getText().toString();
+            if (!search.equals("")) {
+              searchData(search);
+            } else {
+              onStart();
+            }
+          }
+        });
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -357,9 +382,12 @@ public class SubFolderActivity extends AppCompatActivity {
 
                 Long tsLong = System.currentTimeMillis()/1000;
                 String ts = tsLong.toString();
+                String createdBy = USER_LASTNAME + ", " + USER_FIRSTNAME;
 
-                Uploads uploads = new Uploads(folder_id, null, imageUrl, ts);
                 String uploadID = databaseUpload.push().getKey();
+
+                Uploads uploads = new Uploads(folder_id, null, imageUrl, ts, createdBy, uploadID);
+
                 databaseUpload.child(uploadID).setValue(uploads);
 
                 File file = new File(imageUri.getPath());
@@ -435,18 +463,21 @@ public class SubFolderActivity extends AppCompatActivity {
     View mView = getLayoutInflater().inflate(R.layout.dialog_information, null);
     TextView txtDate, txtUploaded;
     ImageView dialog_image;
-    Button btnMove, btnDownload, btnDelete;
+    Button btnDownload, btnDelete;
 
-    txtDate = (TextView) mView.findViewById(R.id.txtDate);
-    txtUploaded = (TextView) mView.findViewById(R.id.txtUploaded);
-    dialog_image = (ImageView) mView.findViewById(R.id.dialogImage);
-    btnMove = (Button) mView.findViewById(R.id.btnMove);
-    btnDownload = (Button) mView.findViewById(R.id.btnDownload);
-    btnDelete = (Button) mView.findViewById(R.id.btnDelete);
+    txtDate = mView.findViewById(R.id.txtDate);
+    txtUploaded = mView.findViewById(R.id.txtUploaded);
+    dialog_image = mView.findViewById(R.id.dialogImage);
+    btnDownload = mView.findViewById(R.id.btnDownload);
+    btnDelete = mView.findViewById(R.id.btnDelete);
 
     if (subFolder.getTimestamp() != null) {
       long timestamp = Long.parseLong(subFolder.getTimestamp()) * 1000L;
       txtDate.setText("Date uploaded: " + getDate(timestamp));
+    }
+
+    if (subFolder.getCreatedBy() != null) {
+      txtUploaded.setText(subFolder.getCreatedBy().toString());
     }
     Picasso.get()
             .load(subFolder.getImage_upload())
@@ -468,6 +499,14 @@ public class SubFolderActivity extends AppCompatActivity {
         downloadToLocalFile(storageRef);
       }
     });
+
+    btnDelete.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        fileDelete(subFolder.getImg_id());
+        dialogAreaFolder.dismiss();
+      }
+    });
   }
 
   // Folder on long Press
@@ -475,13 +514,11 @@ public class SubFolderActivity extends AppCompatActivity {
     AlertDialog.Builder mBuilder = new AlertDialog.Builder(SubFolderActivity.this);
     View mView = getLayoutInflater().inflate(R.layout.dialog_folder_information, null);
     TextView txtDate, txtUploaded;
-    Button btnMove, btnEdit, btnDelete;
+    Button btnDelete;
 
-    txtDate = (TextView) mView.findViewById(R.id.txtDate);
-    txtUploaded = (TextView) mView.findViewById(R.id.txtUploaded);
-    btnMove = (Button) mView.findViewById(R.id.btnMove);
-    btnEdit = (Button) mView.findViewById(R.id.btnDownload);
-    btnDelete = (Button) mView.findViewById(R.id.btnDelete);
+    txtDate = mView.findViewById(R.id.txtDate);
+    txtUploaded = mView.findViewById(R.id.txtCreated);
+    btnDelete = mView.findViewById(R.id.btnDelete);
 
     // Show Dialog
     mBuilder.setView(mView);
@@ -494,6 +531,10 @@ public class SubFolderActivity extends AppCompatActivity {
       txtDate.setText("Date Created: " + getDate(timestamp));
     }
 
+    if (subFolder.getCreatedBy() != null) {
+      txtUploaded.setText(subFolder.getCreatedBy());
+    }
+
     btnDelete.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
@@ -501,8 +542,18 @@ public class SubFolderActivity extends AppCompatActivity {
         dialogAreaFolder.dismiss();
       }
     });
+  }
 
+  private void fileDelete(String FOLDER_ID) {
+    DatabaseReference drSubFolders = FirebaseDatabase
+            .getInstance().getReference("uploads")
+            .child(folder_id)
+            .child(FOLDER_ID);
 
+    drSubFolders.removeValue();
+
+    Toast.makeText(this, "File successfully deleted."
+            , Toast.LENGTH_LONG).show();
   }
 
   private void folderDelete(String FOLDER_ID) {
@@ -574,6 +625,49 @@ public class SubFolderActivity extends AppCompatActivity {
     catch(Exception ex){
       return "xx";
     }
+  }
+
+  private void searchData(String keyword) {
+    final Query foldersQuery = FirebaseDatabase.getInstance()
+            .getReference("subfolders")
+            .child(folder_id)
+            .orderByChild("sub_folder_name")
+            .equalTo(keyword);
+    foldersQuery.addValueEventListener(new ValueEventListener() {
+      @Override
+      public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+        subFolderList.clear();
+        for(DataSnapshot subfolderSnapshot : dataSnapshot.getChildren()) {
+          SubFolder subFolder = subfolderSnapshot.getValue(SubFolder.class);
+          subFolderList.add(subFolder);
+        }
+        SubFolderList areaFoldersListAdapter = new SubFolderList(SubFolderActivity.this, subFolderList);
+        listViewSubFolders.setAdapter(areaFoldersListAdapter);
+
+        Query dbUploads = databaseUpload.orderByKey();
+        dbUploads.addListenerForSingleValueEvent(new ValueEventListener() {
+          @Override
+          public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            for(DataSnapshot subfolderSnapshot : dataSnapshot.getChildren()) {
+              SubFolder subFolder = subfolderSnapshot.getValue(SubFolder.class);
+              subFolderList.add(subFolder);
+            }
+            SubFolderList uploadImageListAdapter = new SubFolderList(SubFolderActivity.this, subFolderList);
+            listViewSubFolders.setAdapter(uploadImageListAdapter);
+          }
+
+          @Override
+          public void onCancelled(@NonNull DatabaseError databaseError) {
+
+          }
+        });
+      }
+
+      @Override
+      public void onCancelled(@NonNull DatabaseError databaseError) {
+
+      }
+    });
   }
 }
 

@@ -46,4 +46,12 @@
         android:layout_below="@+id/textViewFolderName"
         android:layout_marginStart="144dp" />
 
+    <TextView
+        android:id="@+id/txtUpload"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignStart="@+id/txtDate"
+        android:layout_marginTop="76dp" />
+
 </RelativeLayout>

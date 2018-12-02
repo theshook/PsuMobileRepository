@@ -38,10 +38,15 @@ public class SubFolderList extends ArrayAdapter<SubFolder> {
     ImageView img_url = listViewItem.findViewById(R.id.img_upload_image);
     ImageView img_default = listViewItem.findViewById(R.id.imageView2);
     TextView txtDate = listViewItem.findViewById(R.id.txtDate);
+    TextView txtUpload = listViewItem.findViewById(R.id.txtUpload);
 
     SubFolder subFolder = subFolderList.get(position);
 
     txtFolderName.setText(subFolder.getSub_folder_name());
+
+    if (subFolder.getCreatedBy() != null) {
+      txtUpload.setText(subFolder.getCreatedBy());
+    }
 
     if (subFolder.getTimestamp() != null) {
       long timestamp = Long.parseLong(subFolder.getTimestamp()) * 1000L;
