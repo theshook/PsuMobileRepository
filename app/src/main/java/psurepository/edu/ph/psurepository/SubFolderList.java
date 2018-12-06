@@ -57,7 +57,7 @@ public class SubFolderList extends ArrayAdapter<SubFolder> {
       Picasso.get().load(R.drawable.ic_folder).into(img_default);
     } else {
       Picasso.get()
-              .load(subFolder.getImage_upload())
+              .load(subFolder.getImg_url())
               .resize(350, 350)
               .centerCrop()
               .into(img_url);

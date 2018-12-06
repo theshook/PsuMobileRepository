@@ -480,7 +480,7 @@ public class SubFolderActivity extends AppCompatActivity {
       txtUploaded.setText(subFolder.getCreatedBy().toString());
     }
     Picasso.get()
-            .load(subFolder.getImage_upload())
+            .load(subFolder.getImg_url())
             .into(dialog_image);
 
     // Show Dialog
@@ -492,10 +492,10 @@ public class SubFolderActivity extends AppCompatActivity {
     btnDownload.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        mStorage.child(subFolder.getImage_upload());
+        mStorage.child(subFolder.getImg_url());
         FirebaseStorage storage = FirebaseStorage.getInstance();
         // Create a storage reference from our app
-        StorageReference storageRef = storage.getReferenceFromUrl(subFolder.getImage_upload());
+        StorageReference storageRef = storage.getReferenceFromUrl(subFolder.getImg_url());
         downloadToLocalFile(storageRef);
       }
     });

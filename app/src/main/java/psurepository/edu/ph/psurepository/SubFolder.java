@@ -29,7 +29,7 @@ public class SubFolder {
         return sub_folder_name;
     }
 
-    public String getImage_upload() {
+    public String getImg_url() {
         return img_url;
     }
 
